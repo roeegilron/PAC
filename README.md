@@ -4,8 +4,9 @@ Attempt at faster PAC code
 Files: 
 -------------
 
-* `CallerRoutine()` - Main function - some changes here to pre compute values 
-* `ModIndex_v3()` - Function that computes MI  
+* `computePAC()`    - Functional version to implement in code 
+* `CallerRoutine()` - Example function - contains core elements of code with inputs of functional version  
+* `ModIndex_v3()`   - Function that computes MI  
 * `ExtractHGHFOOpenField,mat` - sample data 
 * `eegfilt()` - filtering from eeglab   
 
