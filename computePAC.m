@@ -1,4 +1,4 @@
-function computePAC(data,sr,varargin)
+function results = computePAC(data,sr,varargin)
 %% Compute Phase Amplitude coupling
 %  Written by Roee Gilron roeegilron@gmail.com
 %  Code based on Adriano Tort code described in this paper:
@@ -35,9 +35,12 @@ function computePAC(data,sr,varargin)
 %     example: computePAC(data,sr,'useparfor',0,'computeSurrogates',1)
 %     default: 0
 %  7. regionnames - charachter, regions names to be computed (only relevant if computing
-%     between two regions)
+%     between two regions
 %     example: computePAC(data,sr,'PhaseFreqVector',2:2:50,'regionnames',{'GPi','Motor Cortex'})
 %     default: {'a1','a2'};
+%  8. plotdata - if true (1 -default) plot data, if false, don't plot 
+%     example: computePAC(data,sr,'PhaseFreqVector',2:2:50,'plotdata',0)
+%     default: 1 (plot data) 
 %
 %  Also accpets structure format, example:
 %  params.PhaseFreqVector = 2:2:50;
@@ -46,7 +49,9 @@ function computePAC(data,sr,varargin)
 %  computePAC(data,sr,params);
 %
 %  Outputs:
-%
+%  structure -  results which contain input fields as well as:
+%  1. Comodulogram
+%  
 %
 %  plot of PAC in either 1 / 4 subplots:
 %  if data is 1 x time points - compute PAC within
@@ -58,48 +63,27 @@ function computePAC(data,sr,varargin)
 %  4 plot PAC between area 1 (amp) and area 2 (phase)
 
 
-%% set params (Define the Amplitude- and Phase- Frequencies)
+%% Define function inputs, data, sr requires default values 
 % Parse input arguments
 p = inputParser;
 p.CaseSensitive = false;
 
 validationFcn = @(x) validateattributes(x,{'double'},{'nonempty'});
 
-paramName = 'PhaseFreqVector';
-defaultVal = 2:2:50;
-addParameter(p,paramName,defaultVal,validationFcn)
-
-paramName = 'AmpFreqVector';
-defaultVal = 5:2:100;
-addParameter(p,paramName,defaultVal,validationFcn)
-
-paramName = 'PhaseFreq_BandWidth';
-defaultVal = 4;
-addParameter(p,paramName,defaultVal,validationFcn)
-
-paramName = 'AmpFreq_BandWidth';
-defaultVal = 10;
-addParameter(p,paramName,defaultVal,validationFcn)
-
-paramName = 'useparfor';
-defaultVal = 0;
-addParameter(p,paramName,defaultVal,validationFcn)
-
-paramName = 'computeSurrogates';
-defaultVal = 0;
-addParameter(p,paramName,defaultVal,validationFcn)
+addParameter(p,'PhaseFreqVector',2:2:50,validationFcn)
+addParameter(p,'AmpFreqVector',5:2:100,validationFcn)
+addParameter(p,'PhaseFreq_BandWidth',4,validationFcn)
+addParameter(p,'AmpFreq_BandWidth',10,validationFcn)
+addParameter(p,'useparfor',0,validationFcn)
+addParameter(p,'computeSurrogates',0,validationFcn)
+addParameter(p,'plotdata',1,validationFcn)
 
 validationFcn = @(x) validateattributes(x,{'cell'},{'nonempty'});
-paramName = 'regionnames';
-defaultVal = {'a1','a2'};
-addParameter(p,paramName,defaultVal,validationFcn)
+addParameter(p,'regionnames',{'a1','a2'},validationFcn)
 
 p.parse(varargin{:});
 
-
-%%
 %Extract values from the inputParser
-
 PhaseFreqVector      = p.Results.PhaseFreqVector;
 AmpFreqVector        = p.Results.AmpFreqVector;
 PhaseFreq_BandWidth  = p.Results.PhaseFreq_BandWidth;
@@ -107,6 +91,7 @@ AmpFreq_BandWidth    = p.Results.AmpFreq_BandWidth;
 useparfor            = p.Results.useparfor; % if true, user parfor, requires parallel computing toolbox
 regionames           = p.Results.regionnames;
 computesurr          = p.Results.computeSurrogates;
+plotdata             = p.Results.plotdata;
 
 %% Load data
 lfp           = data;
@@ -115,8 +100,11 @@ data_size     = size(data,1);
 srate         = sr;
 dt            = 1/srate;
 t             = (1:data_length)*dt;
-hfig          = figure('Visible','off');
-hfig.Position = [1000         666        1132         672];
+
+if plotdata
+    hfig          = figure('Visible','off');
+    hfig.Position = [1000         666        1132         672];
+end
 
 if data_size == 1
     numplots = 1; 
@@ -206,28 +194,55 @@ for aa = 1:numplots
         end
     end
     Coreshaped = reshape(Comodulogram,length(PhaseFreqVector),length(AmpFreqVector));
+    %% XXX NEED TO IMPLEMENT 
+    %run surrogates (statistics) if desired
+%     if ~isempty(skip)
+%         for s=1:numsurrogate
+%             Amp_surr =[AmpFreqTransformed(jj,skip(s):end) AmpFreqTransformed(jj,1:skip(s)-1)];
+%             [MI_S,MeanAmp_S]=ModIndex_v2(PhaseFreqTransformed(ii,:), Amp_surr, position);
+%             MI_surr(s) = MI_S;
+%         end
+%         high_surr = length(find(abs(MI_surr)>=(abs(Comodulogram(counter1,1)))));
+%         calculate statistics
+%         pComodulogram(counter1,1) = high_surr./numsurrogate;
+%         zComodulogram(counter1,1) = (Comodulogram(counter1,1) - mean(abs(MI_surr)))./std(abs(MI_surr));
+%     end
+    
+    %%
     fprintf('comod calc done in %f secs \n',toc(start));
+    % save data: 
+    results(aa).Comodulogram        = Coreshaped; 
+    results(aa).PhaseArea           = ttlPha;
+    results(aa).ttlAmp              = ttlAmp;
+    results(aa).AmpFreqVector       = AmpFreqVector;
+    results(aa).PhaseFreqVector     = PhaseFreqVector;
+    results(aa).PhaseFreq_BandWidth = PhaseFreq_BandWidth;
+    results(aa).AmpFreq_BandWidth   = AmpFreq_BandWidth;
+    
     %% plotting
-    if numplots ~=1 
-        subplot(2,2,aa)
-        if aa <= 2 
-            ttlgrp = 'PAC within';
+    if plotdata
+        if numplots ~=1
+            subplot(2,2,aa)
+            if aa <= 2
+                ttlgrp = 'PAC within';
+            else
+                ttlgrp = 'PAC between';
+            end
         else
-            ttlgrp = 'PAC between';
+            ttlgrp = 'PAC within';
         end
-    else
-        ttlgrp = 'PAC within';
+        contourf(PhaseFreqVector+PhaseFreq_BandWidth/2,AmpFreqVector+AmpFreq_BandWidth/2,Coreshaped',30,'lines','none')
+        set(gca,'fontsize',14)
+        ttly = sprintf('Amplitude Frequency %s (Hz)',ttlAmp);
+        ylabel(ttly)
+        ttlx = sprintf('Phase Frequency %s (Hz)',ttlPha);
+        xlabel(ttlx)
+        title(ttlgrp);
+        colorbar
     end
-    contourf(PhaseFreqVector+PhaseFreq_BandWidth/2,AmpFreqVector+AmpFreq_BandWidth/2,Coreshaped',30,'lines','none')
-    set(gca,'fontsize',14)
-    ttly = sprintf('Amplitude Frequency %s (Hz)',ttlAmp);
-    ylabel(ttly)
-    ttlx = sprintf('Phase Frequency %s (Hz)',ttlPha);
-    xlabel(ttlx)
-    title(ttlgrp);
-    colorbar
 end
-hfig.Visible = 'on';
-
+if plotdata
+    hfig.Visible = 'on';
+end
 
 end
