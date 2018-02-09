@@ -259,7 +259,7 @@ for aa = 1:numplots
     else
         Com_surr_reshaped = [];
         zCom_reshaped = [];
-        pvals = []; 
+        pvals_reshape = []; 
         MI_surr = []; 
     end
     %%
