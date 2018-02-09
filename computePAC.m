@@ -260,6 +260,7 @@ for aa = 1:numplots
         Com_surr_reshaped = [];
         zCom_reshaped = [];
         pvals = []; 
+        MI_surr = []; 
     end
     %%
     fprintf('comod calc done in %f secs \n',toc(start));
@@ -267,6 +268,7 @@ for aa = 1:numplots
     results(aa).zComodulogram       = zCom_reshaped; % this will by empty if you didn't run surrogates 
     results(aa).Comodulogram_surr   = Com_surr_reshaped;% this will by empty if you didn't run surrogates 
     results(aa).pvals               = pvals_reshape;% this will by empty if you didn't run surrogates 
+    results(aa).MI_surr             = MI_surr;% this will by empty if you didn't run surrogates 
     results(aa).Comodulogram        = Com_reshaped;
     results(aa).PhaseArea           = ttlPha;
     results(aa).ttlAmp              = ttlAmp;
