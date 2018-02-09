@@ -205,11 +205,11 @@ for aa = 1:numplots
     Comodulogram = zeros(size(pairuse,1),1,'single');
     if useparfor
         parfor p = 1:size(puse1,2)
-            Comodulogram(p) = ModIndex_v3(PhaseFreqTransformed(puse1(p), :), AmpFreqTransformed(puse2(p), :)', position,nbin,winsize,lognbin);
+            Comodulogram(1,p) = ModIndex_v3(PhaseFreqTransformed(puse1(p), :), AmpFreqTransformed(puse2(p), :)', position,nbin,winsize,lognbin);
         end
     else
         for p = 1:size(puse1,2)
-            Comodulogram(p) = ModIndex_v3(PhaseFreqTransformed(puse1(p), :), AmpFreqTransformed(puse2(p), :)', position,nbin,winsize,lognbin);
+            Comodulogram(1,p) = ModIndex_v3(PhaseFreqTransformed(puse1(p), :), AmpFreqTransformed(puse2(p), :)', position,nbin,winsize,lognbin);
         end
     end
     
