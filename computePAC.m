@@ -306,4 +306,10 @@ if plotdata
     hfig.Visible = 'on';
 end
 
+if useparfor
+    if exist('pool','var')
+        delete(pool);
+    end
+end
+
 end
