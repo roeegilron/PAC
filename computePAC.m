@@ -280,6 +280,7 @@ for aa = 1:numplots
     results(aa).numsurrogate        = numsurrogate;
     results(aa).alphause            = alphause;
     results(aa).time_to_compute     = toc(start); % just for logging / compute time purposes
+    results(aa).regionames          = regionames;
     
     %% plotting
     if plotdata
