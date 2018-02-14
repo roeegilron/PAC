@@ -39,14 +39,18 @@ function results = computePAC(data,sr,varargin)
 %     default: 100
 %  7. alphause - alpha use for for statistical purposes
 %     default: 0.05
-%  8. regionnames - charachter, regions names to be computed (only relevant if computing
+%  8. filteruse - charachter, type of filter to use for bp filtering 
+%     example: computePAC(data,sr,'PhaseFreqVector',2:2:50,'filteruse','gaussian')
+%     default: 'fir1' options: 'filterls','fir1', 'gaussian';
+%  9. regionnames - charachter, regions names to be computed (only relevant if computing
 %     between two regions
 %     example: computePAC(data,sr,'PhaseFreqVector',2:2:50,'regionnames',{'GPi','Motor Cortex'})
 %     default: {'a1','a2'};
-%  9. plotdata - if true (1 -default) plot data, if false, don't plot
+% 10. plotdata - if true (1 -default) plot data, if false, don't plot
 %     example: computePAC(data,sr,'PhaseFreqVector',2:2:50,'plotdata',0)
 %     default: 1 (plot data)
 %
+
 %  Also accpets structure format, example:
 %  params.PhaseFreqVector = 2:2:50;
 %  params.AmpFreqVector   = 5:1:100;
@@ -87,6 +91,8 @@ addParameter(p,'plotdata',1,validationFcn)
 
 validationFcn = @(x) validateattributes(x,{'cell'},{'nonempty'});
 addParameter(p,'regionnames',{'a1','a2'},validationFcn)
+validationFcn = @(x) validateattributes(x,{'char'},{'nonempty'});
+addParameter(p,'filteruse','fir1',validationFcn)
 
 p.parse(varargin{:});
 
@@ -101,6 +107,7 @@ computesurr          = p.Results.computeSurrogates;
 numsurrogate         = p.Results.numsurrogate;
 alphause             = p.Results.alphause;
 plotdata             = p.Results.plotdata;
+filteruse            = p.Results.filteruse;
 
 %% Load data
 lfp           = data;
@@ -166,14 +173,14 @@ for aa = 1:numplots
     for ii=1:length(AmpFreqVector)
         Af1 = AmpFreqVector(ii);
         Af2 = Af1+AmpFreq_BandWidth;
-        AmpFreq = eegfilt_pac(datAmp,srate,Af1,Af2); % just filtering
+        AmpFreq = bp_filter(datAmp,srate,Af1,Af2,filteruse); % just filtering
         AmpFreqTransformed(ii, :) = abs(hilbert(AmpFreq)); % getting the amplitude envelope
     end
     
     for jj=1:length(PhaseFreqVector)
         Pf1 = PhaseFreqVector(jj);
         Pf2 = Pf1 + PhaseFreq_BandWidth;
-        PhaseFreq = eegfilt_pac(datPha,srate,Pf1,Pf2); % this is just filtering
+        PhaseFreq = bp_filter(datPha,srate,Pf1,Pf2,filteruse); % this is just filtering
         PhaseFreqTransformed(jj, :) = angle(hilbert(PhaseFreq)); % this is getting the phase time series
     end
     
